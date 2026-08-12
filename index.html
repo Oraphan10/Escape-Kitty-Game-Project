@@ -54,13 +54,13 @@
         }
 
         #start-screen {
-            background-image: url('ui-bg-start.png');
+            background-image: url('assets/ui-bg-start.png');
             justify-content: flex-start;
             padding-top: 40px;
             background-color: #2c3e50;
         }
         #start-screen.active {
-            background-image: url('ui-bg-start.png'); 
+            background-image: url('assets/ui-bg-start.png'); 
             background-repeat: no-repeat; 
             background-size: 100% 100%; 
             background-position: center; 
@@ -203,32 +203,32 @@
     <canvas id="gameCanvas" width="1050" height="450"></canvas>
     
     <div id="start-screen" class="screen active">
-        <img src="ui-mute.png" id="btn-mute-start" class="img-btn" alt="Mute">
-        <img src="ui-logo.png" id="ui-logo" alt="Game Logo">
-        <img src="ui-play.png" id="btn-play" class="img-btn" alt="Play Button">
-        <img src="ui-howto.png" id="ui-howto" alt="How to Play">
+        <img src="assets/ui-mute.png" id="btn-mute-start" class="img-btn" alt="Mute">
+        <img src="assets/ui-logo.png" id="ui-logo" alt="Game Logo">
+        <img src="assets/ui-play.png" id="btn-play" class="img-btn" alt="Play Button">
+        <img src="assets/ui-howto.png" id="ui-howto" alt="How to Play">
     </div>
 
     <div id="game-ui" class="screen">
         <div id="top-left-ui">
             <!-- เอาบอร์ดหัวใจออก โชว์เฉพาะเหรียญ -->
             <div id="coin-board-container">
-                <img src="ui-frame-coin.png" id="ui-frame-coin" alt="Coin Frame">
+                <img src="assets/ui-frame-coin.png" id="ui-frame-coin" alt="Coin Frame">
                 <div id="coin-val">0</div>
             </div>
         </div>
         
-        <img src="ui-pause.png" id="btn-pause" class="img-btn" alt="Pause">
+        <img src="assets/ui-pause.png" id="btn-pause" class="img-btn" alt="Pause">
         <div id="escape-status">หนี! เก็บเหรียญ: <span id="escape-coins-val">0</span>/10</div>
     </div>
 
     <div id="pause-screen" class="screen popup-screen">
         <div class="popup-box">
-            <img src="ui-frame-pause.png" class="popup-bg-frame" alt="Pause Frame">
+            <img src="assets/ui-frame-pause.png" class="popup-bg-frame" alt="Pause Frame">
             <h2 style="color:white; font-size:36px; margin: 0; text-shadow: 2px 2px 4px black;">PAUSED</h2>
             <div class="pause-buttons">
-                <img src="ui-home.png" id="btn-home-pause" class="img-btn" alt="Home">
-                <img src="ui-resume.png" id="btn-resume" class="img-btn" alt="Resume">
+                <img src="assets/ui-home.png" id="btn-home-pause" class="img-btn" alt="Home">
+                <img src="assets/ui-resume.png" id="btn-resume" class="img-btn" alt="Resume">
                 <img src="ui-mute.png" id="btn-mute-pause" class="img-btn" alt="Mute">
             </div>
         </div>
@@ -236,14 +236,14 @@
 
     <div id="game-over-screen" class="screen popup-screen">
         <div class="popup-box">
-            <img src="ui-frame-gameover.png" class="popup-bg-frame" alt="Game Over Frame">
+            <img src="assets/ui-frame-gameover.png" class="popup-bg-frame" alt="Game Over Frame">
             <div class="gameover-stats">
                 <div id="game-over-title" style="font-size: 20px; color: #ff9f43; margin-bottom: 10px;">GAME OVER</div>
                 เหรียญทั้งหมด: <br><span id="final-coins" style="font-size: 48px; color: #f1c40f;">0</span>
             </div>
             <div class="gameover-buttons">
-                <img src="ui-home.png" id="btn-home-over" class="img-btn" alt="Home">
-                <img src="ui-refresh.png" id="btn-restart" class="img-btn" alt="Refresh">
+                <img src="assets/ui-home.png" id="btn-home-over" class="img-btn" alt="Home">
+                <img src="assets/ui-refresh.png" id="btn-restart" class="img-btn" alt="Refresh">
             </div>
         </div>
     </div>
@@ -256,23 +256,23 @@
 <script>
     const IMAGE_PATHS = {
         // --- รูปตัวละคร (4 ท่าทาง) ---
-        playerRun1: 'player-run1.png',   // วิ่งจังหวะที่ 1
-        playerRun2: 'player-run2.png',   // วิ่งจังหวะที่ 2
-        playerJump: 'player-jump.png',   // กระโดด
-        playerDuck: 'player-duck.png',   // หมอบ
+        playerRun1: 'assets/player-run1.png',   // วิ่งจังหวะที่ 1
+        playerRun2: 'assets/player-run2.png',   // วิ่งจังหวะที่ 2
+        playerJump: 'assets/player-jump.png',   // กระโดด
+        playerDuck: 'assets/player-duck.png',   // หมอบ
         
-        monster: 'monster.png',
-        coin: 'coin.png',
-        obstacle: 'obstacle.png',
-        background: 'background.png',
-        obstacleFlying: 'obstacle-flying.png',
-        itemSpeed: 'item-speed.png',
-        itemInvincible: 'item-invincible.png',
+        monster: 'assets/monster.png',
+        coin: 'assets/coin.png',
+        obstacle: 'assets/obstacle.png',
+        background: 'assets/background.png',
+        obstacleFlying: 'assets/obstacle-flying.png',
+        itemSpeed: 'assets/item-speed.png',
+        itemInvincible: 'assets/item-invincible.png',
         
-        btnPlay: 'ui-play.png', btnPause: 'ui-pause.png', btnResume: 'ui-resume.png',
-        btnHome: 'ui-home.png', btnRefresh: 'ui-refresh.png', btnMute: 'ui-mute.png',
-        logo: 'ui-logo.png', howto: 'ui-howto.png',
-        frameCoin: 'ui-frame-coin.png', framePause: 'ui-frame-pause.png', frameGameOver: 'ui-frame-gameover.png'
+        btnPlay: 'assets/ui-play.png', btnPause: 'assets/ui-pause.png', btnResume: 'assets/ui-resume.png',
+        btnHome: 'assets/ui-home.png', btnRefresh: 'assets/ui-refresh.png', btnMute: 'assets/ui-mute.png',
+        logo: 'assets/ui-logo.png', howto: 'assets/ui-howto.png',
+        frameCoin: 'assets/ui-frame-coin.png', framePause: 'assets/ui-frame-pause.png', frameGameOver: 'assets/ui-frame-gameover.png'
     };
 
     const images = {};
