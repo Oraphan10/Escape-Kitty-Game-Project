@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endless Runner: Escape the Monster</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #2c3e50;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 480px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        canvas {
+            display: block;
+            background-color: #e0e0e0; /* สีพื้นหลังชั่วคราว */
+        }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        #score-board {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            color: #333;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+        }
+        /* UI สำหรับสถานะการหนีมอนสเตอร์ */
+        #escape-status {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            color: #e74c3c;
+            font-size: 18px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: none; /* ซ่อนไว้จนกว่ามอนสเตอร์จะมา */
+        }
+        /* UI สำหรับพลังชีวิต (ใช้รูปภาพ) */
+        #health-board {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            display: flex;
+            gap: 5px;
+        }
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            pointer-events: auto;
+            display: none;
+        }
+        #game-over-screen h1 {
+            font-size: 48px;
+            margin: 0 0 10px 0;
+            color: #ff4757;
+        }
+        #game-over-screen p {
+            font-size: 24px;
+            margin: 0 0 30px 0;
+        }
+        button {
+            padding: 12px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            background-color: #2ed573;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="800" height="480"></canvas>
+    
+    <div id="ui-layer">
+        <div id="score-board">
+            <div>Score: <span id="score-val">0</span></div>
+            <div>High Score: <span id="highscore-val">0</span></div>
+        </div>
+        
+        <div id="escape-status">หนี! เก็บเหรียญ: <span id="escape-coins-val">0</span>/10</div>
+
+        <!--รูปหัวใจพลังชีวิต -->>  
+        <div id="health-board">
+            <img src="hearth1.png" id="life-1" style="width: 30px; height: 30px;" alt="life">
+            <img src="hearth2.png" id="life-2" style="width: 30px; height: 30px;" alt="life">
+            <img src="hearth3.png" id="life-3" style="width: 30px; height: 30px;" alt="life">
+        </div>
+    </div>
+
+    <div id="game-over-screen">
+        <h1 id="game-over-title">GAME OVER</h1>
+        <p>Your Score: <span id="final-score">0</span></p>
+        <button id="restart-btn">Restart Game</button>s
+    </div>
+</div>
+
+<script>
+    /**
+     * ==========================================
+     * 1. จุดแก้ไขไฟล์รูปภาพ (ASSETS CONFIGURATION)
+     * ==========================================
+     */
+    const IMAGE_PATHS = {
+        player: 'player.png',
+        monster: 'monster.png',
+        coin: 'coin.png',
+        obstacle: 'obstacle.png',
+        background: 'background.png'
+        
+    };
+
+    // ระบบโหลดภาพพร้อมเช็ค Error
+    const images = {};
+    for (let key in IMAGE_PATHS) {
+        images[key] = new Image();
+        images[key].onerror = function() {
+            console.warn(`[คำเตือน] หาไฟล์ชื่อ "${IMAGE_PATHS[key]}" ไม่พบ เกมจะใช้วิธีวาดกล่องสีทับไปก่อน`);
+        };
+        images[key].src = IMAGE_PATHS[key];
+    }
+
+    function drawSprite(ctx, imgKey, fallbackDraw) {
+        const img = images[imgKey];
+        if (img && img.complete && img.naturalWidth !== 0) {
+            ctx.drawImage(img, this.x, this.y, this.width, this.height);
+        } else {
+            fallbackDraw(ctx, this);
+        }
+    }
+
+    /**
+     * ==========================================
+     * 2. การตั้งค่าพื้นฐานของเกม
+     * ==========================================
+     */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // UI Elements
+    const scoreEl = document.getElementById('score-val');
+    const highScoreEl = document.getElementById('highscore-val');
+    const escapeStatusEl = document.getElementById('escape-status');
+    const escapeCoinsEl = document.getElementById('escape-coins-val');
+    
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const gameOverTitle = document.getElementById('game-over-title');
+    const finalScoreEl = document.getElementById('final-score');
+    const restartBtn = document.getElementById('restart-btn');
+
+    // ตัวแปรสถานะเกม
+    let frames = 0;
+    let score = 0;
+    let highScore = localStorage.getItem('endlessRunnerHighScore') || 0;
+    let gameSpeed = 6;
+    let isGameOver = false;
+    let animationId;
+
+    // ระบบกฎใหม่
+    let lives = 3;
+    let isMonsterChasing = false; 
+    let coinsCollectedToEscape = 0; 
+
+    const GROUND_Y = 400; // ระดับพื้นดิน
+    highScoreEl.innerText = highScore;
+
+    /**
+     * ==========================================
+     * 3. โครงสร้างคลาส (CLASSES)
+     * ==========================================
+     */
+
+    class Player {
+        constructor() {
+            this.width = 50;
+            this.height = 60;
+            this.x = 150; 
+            this.y = GROUND_Y - this.height;
+            this.vy = 0; 
+            
+            // สามารถปรับแรงดึงดูด และ ความสูงการกระโดดได้ตรงนี้
+            this.gravity = 0.6;
+            this.jumpPower = -12;
+            
+            this.isGrounded = true;
+            this.maxJumps = 2;    // กระโดด 2 จังหวะ
+            this.jumpCount = 0;
+            this.invulnerableFrames = 0; // เฟรมอมตะชั่วคราว
+        }
+
+        jump() {
+            if (this.jumpCount < this.maxJumps) {
+                this.vy = this.jumpPower;
+                this.isGrounded = false;
+                this.jumpCount++;
+            }
+        }
+
+        update() {
+            this.y += this.vy;
+            this.vy += this.gravity;
+
+            if (this.y + this.height >= GROUND_Y) {
+                this.y = GROUND_Y - this.height;
+                this.vy = 0;
+                this.isGrounded = true;
+                this.jumpCount = 0;
+            }
+
+            if (this.invulnerableFrames > 0) {
+                this.invulnerableFrames--;
+            }
+        }
+
+        draw() {
+            // เอฟเฟกต์กระพริบเมื่อโดนชน (เป็นอมตะ)
+            if (this.invulnerableFrames > 0 && Math.floor(this.invulnerableFrames / 5) % 2 === 0) {
+                return; 
+            }
+
+            drawSprite.call(this, ctx, 'player', (ctx, obj) => {
+                ctx.fillStyle = '#3498db'; 
+                ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+            });
+        }
+    }
+
+    class Monster {
+        constructor() {
+            this.width = 90;
+            this.height = 100;
+            this.y = GROUND_Y - this.height;
+            this.x = -150; 
+            this.targetX = -150; 
+        }
+
+        update() {
+            // ระบบไล่ล่า
+            this.targetX = isMonsterChasing ? 10 : -150;
+
+            if (isGameOver && isMonsterChasing) {
+                this.targetX = player.x; // พุ่งเข้ามากินตอนแพ้
+            }
+
+            // แอนิเมชันเลื่อนเข้า/ออก
+            this.x += (this.targetX - this.x) * 0.05;
+        }
+
+        draw() {
+            drawSprite.call(this, ctx, 'monster', (ctx, obj) => {
+                ctx.fillStyle = '#e74c3c'; 
+                ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                ctx.fillStyle = 'black';
+                ctx.fillRect(obj.x + 60, obj.y + 20, 10, 10);
+            });
+        }
+    }
+
+    class Obstacle {
+        constructor() {
+            this.width = 40;
+            this.height = 50;
+            this.x = canvas.width;
+            this.y = GROUND_Y - this.height;
+        }
+        update() { this.x -= gameSpeed; }
+        draw() {
+            drawSprite.call(this, ctx, 'obstacle', (ctx, obj) => {
+                ctx.fillStyle = '#e67e22'; 
+                ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+            });
+        }
+    }
+
+    class Coin {
+        constructor() {
+            this.width = 30;
+            this.height = 30;
+            this.x = canvas.width;
+            this.y = GROUND_Y - 120 - Math.random() * 60; 
+            this.isCollected = false;
+        }
+        update() { this.x -= gameSpeed; }
+        draw() {
+            if (this.isCollected) return;
+            drawSprite.call(this, ctx, 'coin', (ctx, obj) => {
+                ctx.fillStyle = '#f1c40f'; 
+                ctx.beginPath();
+                ctx.arc(obj.x + obj.width/2, obj.y + obj.height/2, obj.width/2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+    }
+
+    /**
+     * ==========================================
+     * 4. กลไกหลักของเกม (GAME ENGINE)
+     * ==========================================
+     */
+    let player;
+    let monster;
+    let obstacles = [];
+    let coins = [];
+    let bgX = 0; 
+
+    // อัปเดตการแสดงผลรูปภาพพลังชีวิต
+    function updateLivesUI() {
+        for (let i = 1; i <= 3; i++) {
+            const heartImg = document.getElementById(`life-${i}`);
+            if (i <= lives) {
+                heartImg.style.display = 'block';
+            } else {
+                heartImg.style.display = 'none';
+            }
+        }
+    }
+
+    // อัปเดตการแสดงผลสถานะเก็บเหรียญหนี
+    function updateEscapeUI() {
+        if (isMonsterChasing) {
+            escapeStatusEl.style.display = 'block';
+            escapeCoinsEl.innerText = coinsCollectedToEscape;
+        } else {
+            escapeStatusEl.style.display = 'none';
+        }
+    }
+
+    function init() {
+        player = new Player();
+        monster = new Monster();
+        obstacles = [];
+        coins = [];
+        frames = 0;
+        score = 0;
+        gameSpeed = 4; // เริ่มต้นช้าลงเพื่อความง่าย
+        isGameOver = false;
+        
+        lives = 3;
+        isMonsterChasing = false;
+        coinsCollectedToEscape = 0;
+        
+        scoreEl.innerText = score;
+        updateLivesUI();
+        updateEscapeUI();
+        gameOverScreen.style.display = 'none';
+        
+        loop();
+    }
+
+    // การควบคุมการกระโดด
+    function handleInput(e) {
+        if (e.type === 'keydown' && e.code !== 'Space') return;
+        if (isGameOver) return;
+        player.jump();
+    }
+    window.addEventListener('keydown', handleInput);
+    canvas.addEventListener('mousedown', handleInput);
+    restartBtn.addEventListener('click', init);
+
+    // ตรวจสอบการชน
+    function checkCollision(rect1, rect2) {
+        return (
+            rect1.x < rect2.x + rect2.width &&
+            rect1.x + rect1.width > rect2.x &&
+            rect1.y < rect2.y + rect2.height &&
+            rect1.y + rect1.height > rect2.y
+        );
+    }
+
+    function handleObstacles() {
+        if (frames % 120 === 0 || (frames > 0 && Math.random() < 0.005 && frames % 60 === 0)) {
+            obstacles.push(new Obstacle());
+        }
+
+        for (let i = 0; i < obstacles.length; i++) {
+            let obs = obstacles[i];
+            obs.update();
+            obs.draw();
+
+            let playerHitbox = { x: player.x + 10, y: player.y + 10, width: player.width - 20, height: player.height - 10 };
+            let obsHitbox = { x: obs.x + 5, y: obs.y + 5, width: obs.width - 10, height: obs.height - 10 };
+
+            // ตรวจสอบการชน และเช็คว่าไม่ได้อยู่ในสถานะอมตะ (กระพริบ)
+            if (checkCollision(playerHitbox, obsHitbox) && player.invulnerableFrames <= 0) {
+                
+                lives--;
+                updateLivesUI();
+                player.invulnerableFrames = 60; // อมตะ 1 วินาที (ป้องกันการชนซ้ำซ้อน)
+
+                if (isMonsterChasing) {
+                    // มอนสเตอร์ตามอยู่ แล้วชนอีกรอบ = โดนจับ
+                    gameOver("ถูกสัตว์ประหลาดจับตัวได้!");
+                } else if (lives <= 0) {
+                    // เลือดหมดก่อน = ตาย
+                    gameOver("พลังชีวิตหมด!");
+                } else {
+                    // ชนครั้งแรก เรียกมอนสเตอร์ออกมาล่า
+                    isMonsterChasing = true;
+                    coinsCollectedToEscape = 0;
+                    updateEscapeUI();
+                }
+            }
+
+            if (obs.x + obs.width < 0) {
+                obstacles.splice(i, 1);
+                i--;
+            }
+        }
+    }
+
+    function handleCoins() {
+        if (frames % 90 === 0) { 
+            coins.push(new Coin());
+        }
+
+        for (let i = 0; i < coins.length; i++) {
+            let coin = coins[i];
+            coin.update();
+            coin.draw();
+
+            if (!coin.isCollected && checkCollision(player, coin)) {
+                coin.isCollected = true;
+                score += 10;
+                scoreEl.innerText = Math.floor(score);
+
+                // หากหนีมอนสเตอร์อยู่ ให้นับเหรียญสลัดมอนสเตอร์
+                if (isMonsterChasing) {
+                    coinsCollectedToEscape++;
+                    updateEscapeUI();
+
+                    // ครบ 10 เหรียญ = หนีพ้น
+                    if (coinsCollectedToEscape >= 10) {
+                        isMonsterChasing = false;
+                        updateEscapeUI();
+                    }
+                }
+            }
+
+            if (coin.x + coin.width < 0 || coin.isCollected) {
+                coins.splice(i, 1);
+                i--;
+            }
+        }
+    }
+
+    function drawBackground() {
+        const bgImg = images['background'];
+        if (bgImg.complete && bgImg.naturalWidth !== 0) {
+            bgX -= gameSpeed * 0.5;
+            if (bgX <= -canvas.width) bgX = 0;
+            
+            ctx.drawImage(bgImg, bgX, 0, canvas.width, canvas.height);
+            ctx.drawImage(bgImg, bgX + canvas.width, 0, canvas.width, canvas.height);
+        } else {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#7f8c8d';
+            ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+        }
+    }
+
+    function gameOver(reason) {
+        isGameOver = true;
+        
+        if (score > highScore) {
+            highScore = Math.floor(score);
+            localStorage.setItem('endlessRunnerHighScore', highScore);
+            highScoreEl.innerText = highScore;
+        }
+
+        gameOverTitle.innerText = reason;
+        finalScoreEl.innerText = Math.floor(score);
+        
+        setTimeout(() => {
+            gameOverScreen.style.display = 'flex';
+        }, 500); 
+    }
+
+    function loop() {
+        if (isGameOver) {
+            drawBackground();
+            player.draw();
+            monster.update();
+            monster.draw();
+            return;
+        }
+
+        drawBackground();
+
+        player.update();
+        player.draw();
+        
+        monster.update();
+        monster.draw(); 
+        
+        handleObstacles();
+        handleCoins();
+
+        if (frames % 60 === 0 && frames !== 0) {
+            score += 1;
+            scoreEl.innerText = score;
+            
+            // เพิ่มความเร็วเกมเล็กน้อย (สามารถปรับค่าหรือปิดส่วนนี้ได้ถ้าเร็วไป)
+            if (gameSpeed < 12) {
+                gameSpeed += 0.05; 
+            }
+        }
+
+        frames++;
+        animationId = requestAnimationFrame(loop);
+    }
+
+    init();
+
+</script>
+</body>
+</html>
