@@ -74,7 +74,7 @@
         }
         #ui-logo { 
             position: absolute;
-            top: -60px;
+            top: -10px;
             left: 50%;
             transform: translateX(-50%);
             width: 400px; 
@@ -82,7 +82,7 @@
         }
         #btn-play { 
             position: absolute;
-            top: 50%;
+            top: 40%;
             left: 50%;
             transform: translate(-50%, -50%);
             width: 120px; 
@@ -91,11 +91,11 @@
         }
         #ui-howto { 
             position: absolute;
-            bottom: 30px;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
-            width: 300px; 
-            height: 50px; 
+            width: 1500px; 
+            height: 250px; 
         }
 
         #game-ui {
@@ -115,7 +115,7 @@
         #coin-board-container {
             position: relative;
             width: 150px;
-            height: 50px;
+            height: 90px;
         }
         #ui-frame-coin {
             position: absolute;
@@ -123,7 +123,7 @@
         }
         #coin-val {
             position: absolute;
-            top: 50%; left: 50%;
+            top: 46%; left: 63%;
             transform: translate(-50%, -50%);
             font-size: 24px; font-weight: bold; color: white;
             text-shadow: 1px 1px 3px black;
@@ -204,6 +204,7 @@
     
     <div id="start-screen" class="screen active">
         <img src="assets/ui-mute.png" id="btn-mute-start" class="img-btn" alt="Mute">
+        <!--<img src="assets/ui-unmute.png" id="btn-unmute-pause" class="img-btn" alt="Unmute">-->
         <img src="assets/ui-logo.png" id="ui-logo" alt="Game Logo">
         <img src="assets/ui-play.png" id="btn-play" class="img-btn" alt="Play Button">
         <img src="assets/ui-howto.png" id="ui-howto" alt="How to Play">
@@ -229,7 +230,8 @@
             <div class="pause-buttons">
                 <img src="assets/ui-home.png" id="btn-home-pause" class="img-btn" alt="Home">
                 <img src="assets/ui-resume.png" id="btn-resume" class="img-btn" alt="Resume">
-                <img src="ui-mute.png" id="btn-mute-pause" class="img-btn" alt="Mute">
+                <img src="assets/ui-mute.png" id="btn-mute-pause" class="img-btn" alt="Mute">
+                <!--<img src="assets/ui-unmute.png" id="btn-unmute-pause" class="img-btn" alt="Unmute">-->
             </div>
         </div>
     </div>
@@ -264,10 +266,13 @@
         monster: 'assets/monster.png',
         coin: 'assets/coin.png',
         obstacle: 'assets/obstacle.png',
-        background: 'assets/background.png',
         obstacleFlying: 'assets/obstacle-flying.png',
         itemSpeed: 'assets/item-speed.png',
         itemInvincible: 'assets/item-invincible.png',
+
+        bgMorning: 'assets/bg-morning.png', 
+        bgEvening: 'assets/bg-evening.png', 
+        bgNight: 'assets/bg-night.png',
         
         btnPlay: 'assets/ui-play.png', btnPause: 'assets/ui-pause.png', btnResume: 'assets/ui-resume.png',
         btnHome: 'assets/ui-home.png', btnRefresh: 'assets/ui-refresh.png', btnMute: 'assets/ui-mute.png',
@@ -277,8 +282,8 @@
 
     const images = {};
     for (let key in IMAGE_PATHS) {
-        // อัปเดตรายชื่อคีย์ที่ต้องวาดลง Canvas ให้ครอบคลุมรูป player ทั้ง 4 แบบ
-        if (['playerRun1', 'playerRun2', 'playerJump', 'playerDuck', 'monster', 'coin', 'obstacle', 'background', 'obstacleFlying', 'itemSpeed', 'itemInvincible'].includes(key)) {
+        // 🛠️ อัปเดตรายชื่อใน Array นี้ให้ตรงกับภาพฉากหลังใหม่
+        if (['playerRun1', 'playerRun2', 'playerJump', 'playerDuck', 'monster', 'coin', 'obstacle', 'obstacleFlying', 'itemSpeed', 'itemInvincible', 'bgMorning', 'bgEvening', 'bgNight'].includes(key)) {
             images[key] = new Image();
             images[key].onerror = () => console.warn(`หาไฟล์ภาพ "${IMAGE_PATHS[key]}" ไม่พบ`);
             images[key].src = IMAGE_PATHS[key];
@@ -439,8 +444,8 @@
 
     class Player {
         constructor() {
-            this.originalWidth = 50; 
-            this.originalHeight = 60;
+            this.originalWidth = 85; 
+            this.originalHeight = 100;
             this.width = this.originalWidth; 
             this.height = this.originalHeight;
             
@@ -543,31 +548,60 @@
 
     class Monster {
         constructor() {
-            this.width = 90; this.height = 100;
-            this.y = GROUND_Y - this.height; this.x = -150; this.targetX = -150; 
+            this.width = 120;  
+            this.height = 130; 
+            
+            // ตำแหน่ง Y ที่ปรับแก้ล่าสุด
+            this.y = GROUND_Y - this.height + 17; 
+            
+            this.x = -150; 
+            this.targetX = -150; 
+            
+            // 🛠️ เพิ่มตัวแปรความโปร่งใส (Alpha) สำหรับเอฟเฟกต์ค่อยๆ จางหาย
+            this.alpha = 0; 
         }
+        
         update() {
             this.targetX = isMonsterChasing ? 10 : -150;
             if (gameState === 'GAMEOVER' && isMonsterChasing) this.targetX = player.x;
+            
+            // ขยับเลื่อนตำแหน่ง (สไลด์เข้า/ออก)
             this.x += (this.targetX - this.x) * 0.05;
+            
+            // 🛠️ เอฟเฟกต์ค่อยๆ จางหาย (Fade Out) / ปรากฏตัว (Fade In)
+            if (isMonsterChasing) {
+                this.alpha += 0.05; // ปรากฏตัวไวขึ้น
+                if (this.alpha > 1) this.alpha = 1;
+            } else {
+                this.alpha -= 0.02; // ค่อยๆ จางหายไปเมื่อเลิกตาม
+                if (this.alpha < 0) this.alpha = 0;
+            }
         }
+        
         draw() {
+            if (this.alpha <= 0) return; // ถ้าจางหายสนิทแล้ว ไม่ต้องวาด
+            
+            ctx.save();
+            ctx.globalAlpha = this.alpha; // สั่งให้รูปมอนสเตอร์โปร่งใสตามค่า alpha
+            
             drawSprite.call(this, ctx, 'monster', (ctx, obj) => {
                 ctx.fillStyle = '#e74c3c'; ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
                 ctx.fillStyle = 'black'; ctx.fillRect(obj.x + 60, obj.y + 20, 10, 10);
             });
+            
+            ctx.restore();
         }
     }
 
     class Obstacle {
-        constructor() { this.width = 40; this.height = 50; this.x = canvas.width; this.y = GROUND_Y - this.height; }
+        constructor() { this.width = 60; this.height = 90; this.x = canvas.width; this.y = GROUND_Y - this.height; }
         update() { this.x -= gameSpeed; }
         draw() { drawSprite.call(this, ctx, 'obstacle', (ctx, obj) => { ctx.fillStyle = '#e67e22'; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }); }
     }
 
     class FlyingObstacle {
         constructor() { 
-            this.width = 45; this.height = 35; 
+            this.width = 50; this.height = 50; 
             this.x = canvas.width; 
             this.y = GROUND_Y - 100 - Math.random() * 40; 
         }
@@ -592,7 +626,7 @@
     class Item {
         constructor(type) {
             this.type = type; 
-            this.width = 40; this.height = 40;
+            this.width = 60; this.height = 60;
             this.x = canvas.width;
             this.y = GROUND_Y - 90 - Math.random() * 40;
             this.isCollected = false;
@@ -728,26 +762,59 @@
 
         for (let i = 0; i < items.length; i++) {
             let item = items[i]; item.update(); item.draw();
+            
             if (!item.isCollected && checkCollision(player, item)) {
                 item.isCollected = true;
-                // ตั้งเวลาสถานะพิเศษเป็นเวลา 6 วินาที (360 frames)
-                if (item.type === 'speed') player.speedTimer = 360;
-                else player.invincibleTimer = 360;
+                
+                // เช็คว่าผู้เล่นเก็บไอเท็มอะไรได้
+                if (item.type === 'speed') {
+                    player.speedTimer = 360; // เพิ่มความเร็ว 6 วินาที
+                    
+                    // 🛠️ ถ้าระหว่างนี้มอนสเตอร์กำลังไล่ล่าอยู่ ให้สลัดหลุดและจางหายไปทันที!
+                    if (isMonsterChasing) {
+                        isMonsterChasing = false;
+                        updateEscapeUI();
+                    }
+                    
+                } else {
+                    player.invincibleTimer = 360; // เป็นอมตะ 6 วินาที
+                }
             }
             if (item.x + item.width < 0 || item.isCollected) { items.splice(i, 1); i--; }
         }
     }
 
     function drawBackground() {
-        const bgImg = images['background'];
+        // คำนวณช่วงเวลา โดยหารจำนวนเฟรมด้วย 1500 (ปรับตัวเลข 1500 ลง หากอยากให้สลับฉากเร็วขึ้น)
+        let phase = Math.floor(frames / 1500) % 3; 
+        
+        // กำหนดภาพฉากหลังตาม phase ปัจจุบัน
+        let currentBgKey = 'bgMorning'; // ค่าเริ่มต้น (0)
+        if (phase === 1) currentBgKey = 'bgEvening';
+        else if (phase === 2) currentBgKey = 'bgNight';
+
+        const bgImg = images[currentBgKey];
+        
         if (bgImg && bgImg.complete && bgImg.naturalWidth !== 0) {
+            // ฉากเลื่อนตามปกติ
             if (gameState === 'PLAYING') bgX -= gameSpeed * 0.5;
+            
+            // รีเซ็ตตำแหน่งฉากเมื่อเลื่อนจนสุด
             if (bgX <= -canvas.width) bgX = 0;
+            
+            // วาดรูปฉากหลังต่อกัน 2 รูป
             ctx.drawImage(bgImg, bgX, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImg, bgX + canvas.width, 0, canvas.width, canvas.height);
         } else {
+            // สีสำรองกรณีโหลดรูปไม่ขึ้น จะเปลี่ยนสีตามช่วงเวลาด้วย
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#7f8c8d'; ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+            if (phase === 0) ctx.fillStyle = '#87CEEB'; // ฟ้าสว่าง
+            else if (phase === 1) ctx.fillStyle = '#FF7F50'; // ส้มเย็น
+            else ctx.fillStyle = '#2C3E50'; // กรมท่ามืด
+            
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#7f8c8d'; 
+            ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
         }
     }
 
@@ -791,6 +858,14 @@
     }
 
     images['background'].onload = drawBackground;
+
+    /**
+     * ==========================================
+     * ระบบจัดการเสียง (AUDIO SYSTEM)
+     * ==========================================
+     */
+
+
 </script>
 </body>
 </html>
