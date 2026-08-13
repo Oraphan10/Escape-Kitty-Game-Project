@@ -383,7 +383,6 @@
 
     const images = {};
     for (let key in IMAGE_PATHS) {
-        // 🛠️ อัปเดตรายชื่อใน Array นี้ให้ตรงกับภาพฉากหลังใหม่
         if (['playerRun1', 'playerRun2', 'playerJump', 'playerDuck', 'monster', 'coin', 'obstacle', 'obstacleFlying', 'itemSpeed', 'itemInvincible', 'bgMorning', 'bgEvening', 'bgNight'].includes(key)) {
             images[key] = new Image();
             images[key].onerror = () => console.warn(`หาไฟล์ภาพ "${IMAGE_PATHS[key]}" ไม่พบ`);
@@ -483,7 +482,7 @@
     const GROUND_Y = 400;
     
     // ตั้งค่าความเร็วคงที่
-    const BASE_SPEED = 8;
+    const BASE_SPEED = 10;
 
     const coinEl = document.getElementById('coin-val');
     const escapeStatusEl = document.getElementById('escape-status');
@@ -738,7 +737,7 @@
             let imgKey = this.type === 'speed' ? 'itemSpeed' : 'itemInvincible';
             drawSprite.call(this, ctx, imgKey, (ctx, obj) => { 
                 ctx.fillStyle = this.type === 'speed' ? 'cyan' : 'gold'; 
-                ctx.beginPath(); ctx.arc(obj.x + obj.width/2, obj.y + obj.height/2, obj.width/2, 0, Math.PI * 2); ctx.fill(); 
+                ctx.beginPath(); ctx.arc(obj.x + (obj.width/2)*1.5, obj.y + obj.height/2, obj.width/2, 0, Math.PI * 2); ctx.fill(); 
             });
         }
     }
