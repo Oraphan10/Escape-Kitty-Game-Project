@@ -532,7 +532,7 @@
     const ctx = canvas.getContext('2d');
     const GROUND_Y = 400;
     
-    const BASE_SPEED = 7;
+    const BASE_SPEED = 5;
 
     const coinEl = document.getElementById('coin-val');
     const escapeStatusEl = document.getElementById('escape-status');
@@ -601,7 +601,7 @@
             this.vy = 0; 
             
             this.gravity = 0.5; 
-            this.jumpPower = -12.5; 
+            this.jumpPower = -14; 
             this.isGrounded = true; 
             
             this.maxJumps = 2; 
@@ -988,7 +988,7 @@
     function loop() {
         if (gameState !== 'PLAYING' && gameState !== 'GAMEOVER') return;
 
-        gameSpeed = BASE_SPEED + (player.speedTimer > 0 ? 4 : 0);
+        gameSpeed = BASE_SPEED + (player.speedTimer > 0 ? 2 : 0);
         
         obstacleTimer--;
         coinTimer--;
