@@ -80,10 +80,9 @@
             width: 400px; 
             height: auto;
         }
-        /* 🛠️ สร้าง Keyframes สำหรับเอฟเฟกต์ซูมเข้า-ออก */
         @keyframes pulseZoom {
             0% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.15); } /* ขยายขึ้น 15% */
+            50% { transform: translate(-50%, -50%) scale(1.15); } 
             100% { transform: translate(-50%, -50%) scale(1); }
         }
 
@@ -105,7 +104,7 @@
         #btn-play:active {
             transform: translate(-50%, -50%) scale(0.95);
         }
-        /* 🛠️ กล่อง Container หลักสำหรับจัดตำแหน่งให้อยู่ล่างสุดตรงกลาง */
+        
         #ui-howto-container { 
             position: absolute;
             bottom: 20px; 
@@ -118,7 +117,6 @@
             align-items: center;
         }
 
-        /* รูปกรอบสี่เหลี่ยมสีขาว ให้อยู่เลเยอร์หลังสุด */
         .howto-bg {
             position: absolute;
             top: 0; left: 0; 
@@ -126,7 +124,6 @@
             z-index: -1; 
         }
 
-        /* พื้นที่วางตัวหนังสือให้อยู่ด้านหน้า */
         .howto-content {
             z-index: 1;
             text-align: center;
@@ -139,7 +136,7 @@
             font-weight: bold;
             color: #e74c3c;
             margin-bottom: 5px;
-            text-shadow: 1px 1px 0px white; /* เผื่อพื้นหลังขาวกลืนสี */
+            text-shadow: 1px 1px 0px white;
         }
 
         .howto-text {
@@ -149,7 +146,6 @@
             font-weight: bold;
         }
 
-        /* จัดเรียงรูปไอเทมและคำอธิบายเป็นแนวนอน */
         .howto-items {
             display: flex;
             justify-content: space-around;
@@ -285,9 +281,7 @@
         <img src="assets/ui-logo.png" id="ui-logo" alt="Game Logo">
         <img src="assets/ui-play.png" id="btn-play" class="img-btn" alt="Play Button">
         
-        <!-- 🛠️ กล่องอธิบายวิธีเล่นและไอเทม (แทนที่รูป ui-howto เดิม) -->
         <div id="ui-howto-container">
-            <!-- รูปกรอบพื้นหลังสีขาว -->
             <img src="assets/ui-howto.png" class="howto-bg" alt="How to Play Box">
             
             <div class="howto-content">
@@ -332,7 +326,6 @@
                 <img src="assets/ui-home.png" id="btn-home-pause" class="img-btn" alt="Home">
                 <img src="assets/ui-resume.png" id="btn-resume" class="img-btn" alt="Resume">
                 <img src="assets/ui-mute.png" id="btn-mute-pause" class="img-btn" alt="Mute">
-                <!--<img src="assets/ui-unmute.png" id="btn-unmute-pause" class="img-btn" alt="Unmute">-->
             </div>
         </div>
     </div>
@@ -357,19 +350,63 @@
 </div>
 
 <script>
+    /**
+     * ==========================================
+     * ระบบจัดการเสียง (AUDIO SYSTEM)
+     * ==========================================
+     */
+    const AUDIO_PATHS = {
+        bgm: 'assets/audio/bgm.mp3',
+        jump: 'assets/audio/jump.mp3',
+        duck: 'assets/audio/duck.mp3',
+        coin: 'assets/audio/coin.mp3',
+        powerup: 'assets/audio/powerup.mp3',
+        hit: 'assets/audio/hit.mp3',
+        click: 'assets/audio/click.mp3'
+    };
+
+    const sounds = {};
+    for (let key in AUDIO_PATHS) {
+        sounds[key] = new Audio(AUDIO_PATHS[key]);
+        sounds[key].onerror = () => console.warn(`หาไฟล์เสียง "${AUDIO_PATHS[key]}" ไม่พบ`);
+    }
+
+    sounds.bgm.loop = true;
+    sounds.bgm.volume = 0.4;
+
+    function playSFX(soundName, volume = 1.0) {
+        if (isMuted || !sounds[soundName]) return;
+        sounds[soundName].currentTime = 0;
+        sounds[soundName].volume = volume;
+        sounds[soundName].play().catch(e => {});
+    }
+
+    function playBGM() {
+        if (!isMuted && sounds.bgm) sounds.bgm.play().catch(e => {});
+    }
+
+    function stopBGM() {
+        if (sounds.bgm) {
+            sounds.bgm.pause();
+            sounds.bgm.currentTime = 0;
+        }
+    }
+
     const IMAGE_PATHS = {
-        // --- รูปตัวละคร (4 ท่าทาง) ---
-        playerRun1: 'assets/player-run1.png',   // วิ่งจังหวะที่ 1
-        playerRun2: 'assets/player-run2.png',   // วิ่งจังหวะที่ 2
-        playerJump: 'assets/player-jump.png',   // กระโดด
-        playerDuck: 'assets/player-duck.png',   // หมอบ
+        playerRun1: 'assets/player-run1.png',   
+        playerRun2: 'assets/player-run2.png',   
+        playerJump: 'assets/player-jump.png',   
+        playerDuck: 'assets/player-duck.png',   
         
         monster: 'assets/monster.png',
         coin: 'assets/coin.png',
-        obstacle: 'assets/obstacle.png',
-        obstacleFlying: 'assets/obstacle-flying.png',
+        obstacle: 'assets/obstacle.png',               // หิน
+        obstacleBump: 'assets/obstacle-bump.png',      // ลูกระนาด
+        obstacleBird: 'assets/obstacle-bird.png',      // นกบนพื้น
+        obstacleFlying: 'assets/obstacle-flying.png',  // ยุง
         itemSpeed: 'assets/item-speed.png',
         itemInvincible: 'assets/item-invincible.png',
+
 
         bgMorning: 'assets/bg-morning.png', 
         bgEvening: 'assets/bg-evening.png', 
@@ -383,7 +420,7 @@
 
     const images = {};
     for (let key in IMAGE_PATHS) {
-        if (['playerRun1', 'playerRun2', 'playerJump', 'playerDuck', 'monster', 'coin', 'obstacle', 'obstacleFlying', 'itemSpeed', 'itemInvincible', 'bgMorning', 'bgEvening', 'bgNight'].includes(key)) {
+        if (['playerRun1', 'playerRun2', 'playerJump', 'playerDuck', 'monster', 'coin', 'obstacle', 'obstacleFlying', 'obstacleBump', 'obstacleBird', 'itemSpeed', 'itemInvincible', 'bgMorning', 'bgEvening', 'bgNight'].includes(key)) {
             images[key] = new Image();
             images[key].onerror = () => console.warn(`หาไฟล์ภาพ "${IMAGE_PATHS[key]}" ไม่พบ`);
             images[key].src = IMAGE_PATHS[key];
@@ -414,29 +451,42 @@
     let gameState = 'START';
     let isMuted = false;
 
-    document.getElementById('btn-play').addEventListener('click', () => { initGame(); });
-    document.getElementById('btn-mute-start').addEventListener('click', toggleMute);
-    document.getElementById('btn-pause').addEventListener('click', () => { if (gameState === 'PLAYING') pauseGame(); });
-    document.getElementById('btn-resume').addEventListener('click', resumeGame);
-    document.getElementById('btn-home-pause').addEventListener('click', goHome);
-    document.getElementById('btn-mute-pause').addEventListener('click', toggleMute);
-    document.getElementById('btn-restart').addEventListener('click', () => { initGame(); });
-    document.getElementById('btn-home-over').addEventListener('click', goHome);
+    // --- การเรียกเสียงเอฟเฟกต์ในปุ่ม UI ต่างๆ ---
+    document.getElementById('btn-play').addEventListener('click', () => { playSFX('click'); initGame(); });
+    document.getElementById('btn-mute-start').addEventListener('click', () => { playSFX('click'); toggleMute(); });
+    document.getElementById('btn-pause').addEventListener('click', () => { if (gameState === 'PLAYING') { playSFX('click'); pauseGame(); } });
+    document.getElementById('btn-resume').addEventListener('click', () => { playSFX('click'); resumeGame(); });
+    document.getElementById('btn-home-pause').addEventListener('click', () => { playSFX('click'); goHome(); });
+    document.getElementById('btn-mute-pause').addEventListener('click', () => { playSFX('click'); toggleMute(); });
+    document.getElementById('btn-restart').addEventListener('click', () => { playSFX('click'); initGame(); });
+    document.getElementById('btn-home-over').addEventListener('click', () => { playSFX('click'); goHome(); });
 
     function toggleMute() {
         isMuted = !isMuted;
-        alert(isMuted ? "ปิดเสียงแล้ว" : "เปิดเสียงแล้ว");
+        
+        const muteBtns = [document.getElementById('btn-mute-start'), document.getElementById('btn-mute-pause')];
+        muteBtns.forEach(btn => {
+            if (btn) btn.src = isMuted ? 'assets/ui-unmute.png' : 'assets/ui-mute.png';
+        });
+
+        if (isMuted) {
+            stopBGM();
+        } else {
+            if (gameState === 'PLAYING') playBGM();
+        }
     }
 
     function pauseGame() {
         gameState = 'PAUSED';
         screens.pause.classList.add('active');
+        stopBGM(); 
     }
 
     function resumeGame() {
         screens.pause.classList.remove('active');
         startCountdown(3, () => {
             gameState = 'PLAYING';
+            playBGM(); 
             requestAnimationFrame(loop);
         });
     }
@@ -474,6 +524,7 @@
     function goHome() {
         gameState = 'START';
         showScreen('start');
+        stopBGM();
         drawBackground();
     }
 
@@ -481,7 +532,6 @@
     const ctx = canvas.getContext('2d');
     const GROUND_Y = 400;
     
-    // ตั้งค่าความเร็วคงที่
     const BASE_SPEED = 7;
 
     const coinEl = document.getElementById('coin-val');
@@ -496,7 +546,6 @@
     let isMonsterChasing, coinsCollectedToEscape;
     let player, monster, obstacles, coins, items, bgX;
     
-    // ตัวแปรสำหรับกะระยะการเกิดเพื่อไม่ให้ซ้อนทับกัน
     let obstacleTimer = 0;
     let coinTimer = 0;
     let itemTimer = 0;
@@ -516,7 +565,6 @@
         isMonsterChasing = false;
         coinsCollectedToEscape = 0;
         
-        // ตั้งเวลาเกิดชิ้นแรกเริ่มที่กี่เฟรม
         obstacleTimer = 100;
         coinTimer = 150;
         itemTimer = 500;
@@ -527,14 +575,13 @@
         gameState = 'PLAYING';
         showScreen('game');
         
+        playBGM(); 
         loop();
     }
 
-    // ฟังก์ชันเช็คว่ามีพื้นที่ว่างพอให้สิ่งของชิ้นใหม่เกิดหรือไม่
     function isSpawnClear(minDistance) {
         let entities = [...obstacles, ...coins, ...items];
         for (let e of entities) {
-            // ถ้าระยะขอบขวาของของที่เกิดไปแล้ว ยังอยู่ใกล้ขอบจอขวามากเกินไป -> ยังไม่ให้เกิด
             if (e.x + (e.width || 0) > canvas.width - minDistance) {
                 return false;
             }
@@ -544,7 +591,7 @@
 
     class Player {
         constructor() {
-            this.originalWidth = 100; 
+            this.originalWidth = 90; 
             this.originalHeight = 120;
             this.width = this.originalWidth; 
             this.height = this.originalHeight;
@@ -564,7 +611,6 @@
             this.speedTimer = 0;
             this.invincibleTimer = 0;
             
-            // สถานะหมอบ
             this.isDucking = false;
         }
 
@@ -574,20 +620,22 @@
                 this.isGrounded = false; 
                 this.jumpCount++;
                 
-                // ถ้ายืนหมอบอยู่แล้วกดกระโดด ให้ยกเลิกการหมอบทันที
                 this.isDucking = false;
                 this.height = this.originalHeight;
+                
+                playSFX('jump', 0.6);
             }
         }
 
         duck(isDuckingDown) {
-            // จะหมอบได้เฉพาะตอนอยู่บนพื้นเท่านั้น
             if (isDuckingDown && this.isGrounded) {
                 this.isDucking = true;
-                this.height = this.originalHeight / 2; // ลดความสูง Hitbox ลงครึ่งหนึ่ง
+                this.height = this.originalHeight / 2; 
+                
+                playSFX('duck', 0.5); 
             } else if (!isDuckingDown) {
                 this.isDucking = false;
-                this.height = this.originalHeight; // คืนค่าความสูงเมื่อปล่อยปุ่ม
+                this.height = this.originalHeight; 
             }
         }
 
@@ -595,7 +643,6 @@
             this.y += this.vy; 
             this.vy += this.gravity;
             
-            // ป้องกันตัวละครจมดิน (คำนวณตามความสูงปัจจุบัน)
             if (this.y + this.height >= GROUND_Y) {
                 this.y = GROUND_Y - this.height; 
                 this.vy = 0; 
@@ -618,17 +665,13 @@
                 ctx.shadowColor = "cyan"; ctx.shadowBlur = 15;
             }
 
-            // --- เลือกว่าจะวาดรูปไหนตามสถานะตัวละคร ---
-            let currentImg = 'playerRun1'; // ค่าเริ่มต้น
+            let currentImg = 'playerRun1'; 
             
             if (!this.isGrounded) {
-                // ถ้าตัวลอยอยู่ = กระโดด
                 currentImg = 'playerJump';
             } else if (this.isDucking) {
-                // ถ้ากดลงค้างไว้ = หมอบ
                 currentImg = 'playerDuck';
             } else {
-                // ถ้ายืนบนพื้นปกติ ให้สลับรูปวิ่ง 1 และ 2 ทุกๆ 10 เฟรม (เพิ่ม/ลดเลข 10 เพื่อปรับความเร็วสับขา)
                 if (Math.floor(frames / 10) % 2 === 0) {
                     currentImg = 'playerRun1';
                 } else {
@@ -636,7 +679,6 @@
                 }
             }
 
-            // วาดรูปตามตัวแปร currentImg
             drawSprite.call(this, ctx, currentImg, (ctx, obj) => { 
                 ctx.fillStyle = this.isDucking ? '#2980b9' : '#3498db'; 
                 ctx.fillRect(obj.x, obj.y, obj.width, obj.height); 
@@ -650,14 +692,9 @@
         constructor() {
             this.width = 120;  
             this.height = 130; 
-            
-            // ตำแหน่ง Y ที่ปรับแก้ล่าสุด
             this.y = GROUND_Y - this.height + 17; 
-            
             this.x = -150; 
             this.targetX = -150; 
-            
-            // 🛠️ เพิ่มตัวแปรความโปร่งใส (Alpha) สำหรับเอฟเฟกต์ค่อยๆ จางหาย
             this.alpha = 0; 
         }
         
@@ -665,24 +702,22 @@
             this.targetX = isMonsterChasing ? 10 : -150;
             if (gameState === 'GAMEOVER' && isMonsterChasing) this.targetX = player.x;
             
-            // ขยับเลื่อนตำแหน่ง (สไลด์เข้า/ออก)
             this.x += (this.targetX - this.x) * 0.05;
             
-            // 🛠️ เอฟเฟกต์ค่อยๆ จางหาย (Fade Out) / ปรากฏตัว (Fade In)
             if (isMonsterChasing) {
-                this.alpha += 0.05; // ปรากฏตัวไวขึ้น
+                this.alpha += 0.05; 
                 if (this.alpha > 1) this.alpha = 1;
             } else {
-                this.alpha -= 0.02; // ค่อยๆ จางหายไปเมื่อเลิกตาม
+                this.alpha -= 0.02; 
                 if (this.alpha < 0) this.alpha = 0;
             }
         }
         
         draw() {
-            if (this.alpha <= 0) return; // ถ้าจางหายสนิทแล้ว ไม่ต้องวาด
+            if (this.alpha <= 0) return; 
             
             ctx.save();
-            ctx.globalAlpha = this.alpha; // สั่งให้รูปมอนสเตอร์โปร่งใสตามค่า alpha
+            ctx.globalAlpha = this.alpha; 
             
             drawSprite.call(this, ctx, 'monster', (ctx, obj) => {
                 ctx.fillStyle = '#e74c3c'; ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
@@ -708,6 +743,27 @@
         update() { this.x -= gameSpeed; }
         draw() { drawSprite.call(this, ctx, 'obstacleFlying', (ctx, obj) => { ctx.fillStyle = '#8e44ad'; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }); }
     }
+    // 🛠️ คลาสนก (ปรับให้บินบนฟ้า)
+    class ObstacleBird {
+        constructor() { 
+            this.width = 45; 
+            this.height = 45; 
+            this.x = canvas.width; 
+            
+            // 🛠️ แก้ไขแนว Y ให้ลอยเหนือพื้น (สุ่มความสูงให้อยู่ในระดับที่ต้องหมอบหลบหรือกระโดดชนพอดี)
+            this.y = GROUND_Y - 90 - Math.random() * 40; 
+        }
+        update() { this.x -= gameSpeed; }
+        draw() { drawSprite.call(this, ctx, 'obstacleBird', (ctx, obj) => { ctx.fillStyle = '#c0392b'; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }); }
+    }
+
+    // 🛠️ คลาสลูกระนาด (กว้างแต่เตี้ย ต้องกระโดดข้าม)
+    class ObstacleBump {
+        constructor() { this.width = 90; this.height = 100; this.x = canvas.width; this.y = GROUND_Y - this.height; }
+        update() { this.x -= gameSpeed; }
+        draw() { drawSprite.call(this, ctx, 'obstacleBump', (ctx, obj) => { ctx.fillStyle = '#f39c12'; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }); }
+    }
+
 
     class Coin {
         constructor(x, y) { 
@@ -751,26 +807,22 @@
         }
     }
 
-    // --- ระบบควบคุมใหม่ รองรับ กดลง เพื่อหมอบ ---
     function handleKeyDown(e) {
         if (gameState !== 'PLAYING') return;
-        // กด Spacebar หรือ ลูกศรขึ้น เพื่อกระโดด
         if (e.code === 'Space' || e.code === 'ArrowUp') {
             player.jump();
         }
-        // กด ลูกศรลง เพื่อหมอบ
         if (e.code === 'ArrowDown') {
             player.duck(true);
         }
     }
     function handleKeyUp(e) {
         if (gameState !== 'PLAYING') return;
-        // เมื่อปล่อยปุ่มลูกศรลง ให้เลิกหมอบ
         if (e.code === 'ArrowDown') {
             player.duck(false);
         }
     }
-    //Event listeners สำหรับการกดปุ่มคีย์บอร์ดและคลิกเมาส์
+    
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     canvas.addEventListener('mousedown', () => { if (gameState === 'PLAYING') player.jump(); });
@@ -780,12 +832,20 @@
     }
 
     function handleObstacles() {
-        // ใช้ Timer ควบคู่กับตัวเช็คระยะห่าง 250px เพื่อกันเกิดซ้อนทับกัน
         if (obstacleTimer <= 0 && isSpawnClear(250)) {
-            if (Math.random() > 0.3) obstacles.push(new Obstacle());
-            else obstacles.push(new FlyingObstacle());
             
-            // ตั้งเวลาเกิดชิ้นต่อไปแบบสุ่ม
+            let rand = Math.random();
+            
+            if (rand < 0.30) {
+                obstacles.push(new FlyingObstacle());
+            } else if (rand < 0.55) {
+                obstacles.push(new Obstacle());
+            } else if (rand < 0.80) {
+                obstacles.push(new ObstacleBump());
+            } else {
+                obstacles.push(new ObstacleBird());
+            }
+            
             obstacleTimer = 100 + Math.floor(Math.random() * 60);
         }
 
@@ -796,12 +856,12 @@
 
             if (checkCollision(pBox, oBox) && player.invulnerableFrames <= 0) {
                 if (player.invincibleTimer > 0) {
-                    // หากมีบัฟอมตะ ปล่อยทะลุ ไม่เสียพลัง
+                    
                 } else {
-                    player.invulnerableFrames = 60; // อมตะ 1 วินาทีหลังชน
+                    player.invulnerableFrames = 60; 
                     
                     if (isMonsterChasing) {
-                        doGameOver("ถูกมอนสเตอร์จับตัวได้!"); // หากมอนสเตอร์ตามอยู่และชนซ้ำ = ตาย
+                        doGameOver("ถูกมอนสเตอร์จับตัวได้!"); 
                     } else { 
                         isMonsterChasing = true; 
                         coinsCollectedToEscape = 0; 
@@ -814,7 +874,6 @@
     }
 
     function handleCoins() {
-        // เช็คให้เว้นระยะจากสิ่งอื่นๆ อย่างน้อย 300px ค่อยปล่อยเหรียญชุดต่อไป
         if (coinTimer <= 0 && isSpawnClear(300)) {
             let pattern = Math.random();
             let startY = GROUND_Y - 100 - Math.random() * 50;
@@ -843,6 +902,8 @@
                 totalCoins++;
                 coinEl.innerText = totalCoins;
 
+                playSFX('coin', 0.7); 
+
                 if (isMonsterChasing) {
                     coinsCollectedToEscape++; updateEscapeUI();
                     if (coinsCollectedToEscape >= 10) { isMonsterChasing = false; updateEscapeUI(); }
@@ -853,7 +914,6 @@
     }
 
     function handleItems() {
-        // เว้นระยะเกิดไอเท็มที่ 300px
         if (itemTimer <= 0 && isSpawnClear(300)) {
             let type = Math.random() > 0.5 ? 'speed' : 'invincible';
             items.push(new Item(type));
@@ -866,18 +926,18 @@
             if (!item.isCollected && checkCollision(player, item)) {
                 item.isCollected = true;
                 
-                // เช็คว่าผู้เล่นเก็บไอเท็มอะไรได้
+                playSFX('powerup', 0.8); 
+
                 if (item.type === 'speed') {
-                    player.speedTimer = 600; // เพิ่มความเร็ว 6 วินาที
+                    player.speedTimer = 600; 
                     
-                    // 🛠️ ถ้าระหว่างนี้มอนสเตอร์กำลังไล่ล่าอยู่ ให้สลัดหลุดและจางหายไปทันที!
                     if (isMonsterChasing) {
                         isMonsterChasing = false;
                         updateEscapeUI();
                     }
                     
                 } else {
-                    player.invincibleTimer = 500; // เป็นอมตะ 6 วินาที
+                    player.invincibleTimer = 500; 
                 }
             }
             if (item.x + item.width < 0 || item.isCollected) { items.splice(i, 1); i--; }
@@ -885,32 +945,26 @@
     }
 
     function drawBackground() {
-        // คำนวณช่วงเวลา โดยหารจำนวนเฟรมด้วย 1500 (ปรับตัวเลข 1500 ลง หากอยากให้สลับฉากเร็วขึ้น)
         let phase = Math.floor(frames / 1500) % 3; 
         
-        // กำหนดภาพฉากหลังตาม phase ปัจจุบัน
-        let currentBgKey = 'bgMorning'; // ค่าเริ่มต้น (0)
+        let currentBgKey = 'bgMorning'; 
         if (phase === 1) currentBgKey = 'bgEvening';
         else if (phase === 2) currentBgKey = 'bgNight';
 
         const bgImg = images[currentBgKey];
         
         if (bgImg && bgImg.complete && bgImg.naturalWidth !== 0) {
-            // ฉากเลื่อนตามปกติ
             if (gameState === 'PLAYING') bgX -= gameSpeed * 0.5;
             
-            // รีเซ็ตตำแหน่งฉากเมื่อเลื่อนจนสุด
             if (bgX <= -canvas.width) bgX = 0;
             
-            // วาดรูปฉากหลังต่อกัน 2 รูป
             ctx.drawImage(bgImg, bgX, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImg, bgX + canvas.width, 0, canvas.width, canvas.height);
         } else {
-            // สีสำรองกรณีโหลดรูปไม่ขึ้น จะเปลี่ยนสีตามช่วงเวลาด้วย
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (phase === 0) ctx.fillStyle = '#87CEEB'; // ฟ้าสว่าง
-            else if (phase === 1) ctx.fillStyle = '#FF7F50'; // ส้มเย็น
-            else ctx.fillStyle = '#2C3E50'; // กรมท่ามืด
+            if (phase === 0) ctx.fillStyle = '#87CEEB'; 
+            else if (phase === 1) ctx.fillStyle = '#FF7F50'; 
+            else ctx.fillStyle = '#2C3E50'; 
             
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#7f8c8d'; 
@@ -923,6 +977,9 @@
         gameOverTitle.innerText = reason;
         finalCoinsEl.innerText = totalCoins;
         
+        stopBGM(); 
+        playSFX('hit', 0.9); 
+
         setTimeout(() => {
             screens.gameOver.classList.add('active');
         }, 800); 
@@ -931,10 +988,8 @@
     function loop() {
         if (gameState !== 'PLAYING' && gameState !== 'GAMEOVER') return;
 
-        // คำนวณความเร็วเกม: ความเร็วพื้นฐาน + หากมีบัฟความเร็วบวกเพิ่มแค่ +2 ไม่ให้เร็วเกิน
         gameSpeed = BASE_SPEED + (player.speedTimer > 0 ? 4 : 0);
         
-        // ลดเวลา timer การเกิดสิ่งต่างๆ
         obstacleTimer--;
         coinTimer--;
         itemTimer--;
@@ -958,13 +1013,6 @@
     }
 
     images['background'].onload = drawBackground;
-
-    /**
-     * ==========================================
-     * ระบบจัดการเสียง (AUDIO SYSTEM)
-     * ==========================================
-     */
-
 
 </script>
 </body>
