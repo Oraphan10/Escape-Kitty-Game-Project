@@ -482,7 +482,7 @@
     const GROUND_Y = 400;
     
     // ตั้งค่าความเร็วคงที่
-    const BASE_SPEED = 10;
+    const BASE_SPEED = 7;
 
     const coinEl = document.getElementById('coin-val');
     const escapeStatusEl = document.getElementById('escape-status');
@@ -544,8 +544,8 @@
 
     class Player {
         constructor() {
-            this.originalWidth = 85; 
-            this.originalHeight = 100;
+            this.originalWidth = 100; 
+            this.originalHeight = 120;
             this.width = this.originalWidth; 
             this.height = this.originalHeight;
             
@@ -694,7 +694,7 @@
     }
 
     class Obstacle {
-        constructor() { this.width = 60; this.height = 100; this.x = canvas.width; this.y = GROUND_Y - this.height; }
+        constructor() { this.width = 50; this.height = 100; this.x = canvas.width; this.y = GROUND_Y - this.height; }
         update() { this.x -= gameSpeed; }
         draw() { drawSprite.call(this, ctx, 'obstacle', (ctx, obj) => { ctx.fillStyle = '#e67e22'; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }); }
     }
