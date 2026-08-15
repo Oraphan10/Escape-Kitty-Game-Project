@@ -402,11 +402,10 @@
         coin: 'assets/coin.png',
         obstacle: 'assets/obstacle.png',               // หิน
         obstacleBump: 'assets/obstacle-bump.png',      // ลูกระนาด
-        obstacleBird: 'assets/obstacle-bird.png',      // นกบนพื้น
+        obstacleBird: 'assets/obstacle-bird.png',      // นก
         obstacleFlying: 'assets/obstacle-flying.png',  // ยุง
         itemSpeed: 'assets/item-speed.png',
         itemInvincible: 'assets/item-invincible.png',
-
 
         bgMorning: 'assets/bg-morning.png', 
         bgEvening: 'assets/bg-evening.png', 
@@ -451,7 +450,7 @@
     let gameState = 'START';
     let isMuted = false;
 
-    // --- การเรียกเสียงเอฟเฟกต์ในปุ่ม UI ต่างๆ ---
+    // --- เสียงเอฟเฟกต์ในปุ่ม ---
     document.getElementById('btn-play').addEventListener('click', () => { playSFX('click'); initGame(); });
     document.getElementById('btn-mute-start').addEventListener('click', () => { playSFX('click'); toggleMute(); });
     document.getElementById('btn-pause').addEventListener('click', () => { if (gameState === 'PLAYING') { playSFX('click'); pauseGame(); } });
@@ -743,21 +742,18 @@
         update() { this.x -= gameSpeed; }
         draw() { drawSprite.call(this, ctx, 'obstacleFlying', (ctx, obj) => { ctx.fillStyle = '#8e44ad'; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }); }
     }
-    // 🛠️ คลาสนก (ปรับให้บินบนฟ้า)
     class ObstacleBird {
         constructor() { 
             this.width = 45; 
             this.height = 45; 
             this.x = canvas.width; 
             
-            // 🛠️ แก้ไขแนว Y ให้ลอยเหนือพื้น (สุ่มความสูงให้อยู่ในระดับที่ต้องหมอบหลบหรือกระโดดชนพอดี)
             this.y = GROUND_Y - 90 - Math.random() * 40; 
         }
         update() { this.x -= gameSpeed; }
         draw() { drawSprite.call(this, ctx, 'obstacleBird', (ctx, obj) => { ctx.fillStyle = '#c0392b'; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }); }
     }
 
-    // 🛠️ คลาสลูกระนาด (กว้างแต่เตี้ย ต้องกระโดดข้าม)
     class ObstacleBump {
         constructor() { this.width = 90; this.height = 100; this.x = canvas.width; this.y = GROUND_Y - this.height; }
         update() { this.x -= gameSpeed; }
