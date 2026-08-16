@@ -1,4 +1,7 @@
-## Escape Kitty Demo Video
+#Deploy Link
+https://oraphan10.github.io/Game-Project/
+
+# Escape Kitty Demo Video
 https://drive.google.com/file/d/1Hu8fGxshX1MeN476GgWCwzvxaB-EcA0g/view?usp=drive_link
 
 # ผลการประเมินเกม ESCAPE KITTY ?
